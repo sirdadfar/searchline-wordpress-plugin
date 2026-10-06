@@ -1,0 +1,17 @@
+<?php
+declare(strict_types=1);
+namespace SLWC\Inquiries;
+defined('ABSPATH')||exit;
+final class Registry{
+ public static function all():array{return apply_filters('slwc_inquiry_definitions',self::definitions());}
+ public static function get(string$id):?array{$a=self::all();return isset($a[$id])?(array)$a[$id]:null;}
+ private static function definitions():array{
+  $labels=['idcode'=>'National ID information','nationalcode'=>'National ID verification','foreginid'=>'Foreign identity','postalcode'=>'Postal code','tel'=>'Landline','mobile'=>'Mobile','shahkar'=>'Shahkar','company'=>'Company by national ID','companyname'=>'Company name','insurance'=>'Insurance','exitban'=>'Exit ban','education'=>'Education','rahvar'=>'Traffic fines','negativepoint'=>'License penalty points','domain'=>'Domain','enamad'=>'Enamad','standard'=>'Standard mark','imei'=>'IMEI','blacklist'=>'Telecom blacklist','post'=>'Parcel tracking','cardnumber'=>'Card number','sheba'=>'Sheba','bill'=>'Bill','taxnumber'=>'Tax number','ip'=>'IP geolocation','location'=>'Coordinate geolocation'];
+  $inputs=['idcode'=>['IdCode','BirthDate'],'nationalcode'=>['IdCode','BirthDate','Name','Family','FatherName','NationalId'],'foreginid'=>['ForeginId','BirthDate'],'postalcode'=>['PostalCode'],'tel'=>['Tel'],'mobile'=>['Mobile'],'shahkar'=>['Mobile','IdCode'],'company'=>['NationalId'],'companyname'=>['Name'],'insurance'=>['IdCode'],'exitban'=>['IdCode'],'education'=>['IdCode'],'rahvar'=>['PostalBarcode'],'negativepoint'=>['LicenseNumber'],'domain'=>['Domain'],'enamad'=>['Domain'],'standard'=>['LicenseNumber'],'imei'=>['IMEI'],'blacklist'=>['Mobile'],'post'=>['Barcode'],'cardnumber'=>['CardNumber'],'sheba'=>['Sheba'],'bill'=>['BillId','PaymentId'],'taxnumber'=>['TaxNumber'],'ip'=>['IP'],'location'=>['Latitude','Longitude']];
+  $ops=['idcode'=>'IdCode','nationalcode'=>'NationalCode','foreginid'=>'ForeginId','postalcode'=>'PostalCode','tel'=>'Tel','mobile'=>'Mobile','shahkar'=>'Shahkar','company'=>'Company','companyname'=>'CompanyName','insurance'=>'Insurance','exitban'=>'Exitban','education'=>'Education','rahvar'=>'Rahvar','negativepoint'=>'NegativePoint','domain'=>'Domain','enamad'=>'Enamad','standard'=>'Standard','imei'=>'IMEI','blacklist'=>'BlackList','post'=>'Post','cardnumber'=>'CardNumber','sheba'=>'Sheba','bill'=>'Bill','taxnumber'=>'TaxNumber','ip'=>'IP','location'=>'Location'];
+  $d=[];foreach($inputs as$id=>$params)$d[$id]=['id'=>$id,'label'=>$labels[$id],'group'=>'80','op'=>$ops[$id],'mode'=>'off','trigger'=>'order_created','inputs'=>$params,'conditions'=>[],'success_actions'=>[],'failure_actions'=>[],'error_policy'=>'fail_open','sensitive'=>in_array($id,['idcode','nationalcode','foreginid','shahkar','insurance','cardnumber','sheba'],true)];
+  $d['validation_70']=['id'=>'validation_70','label'=>'Information validation','group'=>'70','mode'=>'off','trigger'=>'order_created','inputs'=>['IdCode','BirthDate','Name','Family','FatherName','NationalId','Address','Photo','Mobile','Tel','CardNumber1','CardNumber2','CardNumber3','Sheba1','Sheba2','Sheba3','PostalCode'],'sensitive'=>true];
+  $d['authentication_60']=['id'=>'authentication_60','label'=>'OTP authentication','group'=>'60','mode'=>'off','trigger'=>'checkout_validation','inputs'=>['Mobile','IdCode','BirthDate'],'sensitive'=>true];
+  return$d;
+ }
+}

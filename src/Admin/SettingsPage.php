@@ -1,0 +1,17 @@
+<?php
+declare(strict_types=1);
+namespace SLWC\Admin;
+use SLWC\Settings;
+use SLWC\Support\Crypto;
+use SLWC\Inquiries\Registry;
+defined('ABSPATH')||exit;
+final class SettingsPage{
+ public function register():void{add_action('admin_menu',[$this,'menu']);add_action('admin_init',[$this,'settings']);}
+ public function menu():void{add_submenu_page('woocommerce','Searchline','Searchline','manage_woocommerce','slwc',[$this,'render']);}
+ public function settings():void{register_setting('slwc','slwc_settings',['sanitize_callback'=>[$this,'sanitize']]);}
+ public function sanitize($v):array{$v=is_array($v)?$v:[];$v=wp_parse_args($v,Settings::defaults());if(isset($v['connection']['token'])&&$v['connection']['token']!=='')$v['connection']['token']=Crypto::encrypt(sanitize_text_field((string)$v['connection']['token']));if(isset($v['connection']['timeout']))$v['connection']['timeout']=max(5,min(120,absint($v['connection']['timeout'])));return$v;}
+ public function render():void{if(!current_user_can('manage_woocommerce'))return;$s=Settings::all();echo'<div class="wrap slwc-admin"><h1>'.esc_html__('Searchline for WooCommerce',SLWC_TEXT_DOMAIN).'</h1><form method="post" action="options.php">';settings_fields('slwc');$this->connection((array)$s['connection']);$this->inquiries();$this->privacy((array)$s['privacy']);submit_button();echo'</form></div>';}
+ private function connection(array$c):void{echo'<h2>'.esc_html__('Connection',SLWC_TEXT_DOMAIN).'</h2><table class="form-table"><tr><th>'.esc_html__('API Token',SLWC_TEXT_DOMAIN).'</th><td><input class="regular-text" type="password" name="slwc_settings[connection][token]" value="" autocomplete="new-password"><p class="description">'.esc_html__('Leave empty to keep the current token. SLWC_TOKEN in wp-config.php takes precedence.',SLWC_TEXT_DOMAIN).'</p></td></tr>';foreach(['80'=>'url_80','70'=>'url_70','60'=>'url_60']as$g=>$k)echo'<tr><th>'.esc_html__('Group :'.$g,SLWC_TEXT_DOMAIN).'</th><td><input class="large-text" name="slwc_settings[connection]['.esc_attr($k).']" value="'.esc_attr((string)$c[$k]).'"></td></tr>';echo'<tr><th>'.esc_html__('Timeout',SLWC_TEXT_DOMAIN).'</th><td><input type="number" min="5" max="120" name="slwc_settings[connection][timeout]" value="'.esc_attr((string)$c['timeout']).'"></td></tr></table>';}
+ private function inquiries():void{echo'<h2>'.esc_html__('Inquiries',SLWC_TEXT_DOMAIN).'</h2><table class="widefat striped"><thead><tr><th>Inquiry</th><th>Mode</th><th>Group</th><th>Inputs</th></tr></thead><tbody>';foreach(Registry::all()as$id=>$d){$saved=(array)Settings::get('inquiries',[]);$mode=isset($saved[$id]['mode'])?(string)$saved[$id]['mode']:'off';echo'<tr><td>'.esc_html($d['label']).'</td><td><select name="slwc_settings[inquiries]['.esc_attr($id).'][mode]"><option value="off"'.selected($mode,'off',false).'>Off</option><option value="manual"'.selected($mode,'manual',false).'>Manual</option><option value="automatic"'.selected($mode,'automatic',false).'>Automatic</option></select></td><td>'.esc_html($d['group']).'</td><td>'.esc_html(implode(', ',(array)$d['inputs'])).'</td></tr>'; }echo'</tbody></table>';}
+ private function privacy(array$p):void{echo'<h2>'.esc_html__('Privacy & Data',SLWC_TEXT_DOMAIN).'</h2><label><input type="checkbox" name="slwc_settings[privacy][delete_on_uninstall]" value="1" '.checked(!empty($p['delete_on_uninstall']),true,false).'> '.esc_html__('Delete plugin data on uninstall',SLWC_TEXT_DOMAIN).'</label>';}
+}

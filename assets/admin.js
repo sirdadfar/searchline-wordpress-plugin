@@ -1,0 +1,1 @@
+(function($){'use strict';$(function(){$('.slwc-admin .nav-tab').on('click',function(){$('.slwc-admin .nav-tab').removeClass('nav-tab-active');$(this).addClass('nav-tab-active');});});})(jQuery);
